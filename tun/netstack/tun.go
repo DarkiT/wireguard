@@ -108,7 +108,7 @@ func CreateNetTUN(localAddresses, dnsServers []netip.Addr, mtu int) (tun.Device,
 }
 
 func (tun *netTun) Name() (string, error) {
-	return "go", nil
+	return "vtun", nil
 }
 
 func (tun *netTun) File() *os.File {
@@ -382,6 +382,10 @@ func (net *Net) ListenPing(laddr *PingAddr) (*PingConn, error) {
 		la = laddr.addr
 	}
 	return net.ListenPingAddr(la)
+}
+
+func (net *Net) Stack() *stack.Stack {
+	return net.stack
 }
 
 func (pc *PingConn) LocalAddr() net.Addr {
