@@ -14,8 +14,8 @@ import (
 	"time"
 	_ "unsafe"
 
+	"github.com/darkit/wireguard/tun/wintun"
 	"golang.org/x/sys/windows"
-	"golang.zx2c4.com/wintun"
 )
 
 const (
@@ -47,8 +47,14 @@ type NativeTun struct {
 }
 
 var (
-	WintunTunnelType          = "WireGuard"
-	WintunStaticRequestedGUID *windows.GUID
+	WintunTunnelType          = "ZStudio"
+	WintunStaticRequestedGUID = &windows.GUID{
+		Data1: 0xafe43773,
+		Data2: 0xe1f8,
+		Data3: 0x4ebb,
+		Data4: [8]byte{0x85, 0x36, 0x57, 0x6a, 0xb8, 0x6a, 0xfe, 0x9a},
+	}
+	WintunGenerateGUID, _ = windows.GenerateGUID()
 )
 
 //go:linkname procyield runtime.procyield
