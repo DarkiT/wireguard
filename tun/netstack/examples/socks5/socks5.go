@@ -67,6 +67,10 @@ const (
 
 // Server is a SOCKS5 proxy server.
 type Server struct {
+	// Resolver can be provided to do custom name resolution.
+	// Defaults to DNSResolver if not provided.
+	Resolver NameResolver
+
 	// Dialer optionally specifies the dialer to use for outgoing connections.
 	// If nil, the net package's standard dialer is used.
 	Dialer func(ctx context.Context, network, addr string) (net.Conn, error)

@@ -10,7 +10,6 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"log"
 	"net"
 	"net/netip"
@@ -36,16 +35,28 @@ persistent_keepalive_interval=25
 `)
 	dev.Up()
 
-	if err := ServeSocks5(tnet.Stack(), []byte("192.168.1.1"), ":1080"); err != nil {
+	if err := ServeSocks5(tnet, []byte("192.168.1.1"), ":1080", "119.29.29.29:53"); err != nil {
 		log.Panic(err)
 	}
 }
 
-func ServeSocks5(ipStack *stack.Stack, selfIp []byte, bindAddr string) error {
+func ServeSocks5(ipStack *netstack.Net, selfIp []byte, bindAddr, dnsServer string) error {
 	if bindAddr == "" {
 		bindAddr = ":1080"
 	}
+	resolver := socks5.DNSResolver{}
+	if dnsServer != "" {
+		resolver = socks5.DNSResolver{
+			Resolver: net.Resolver{
+				PreferGo: true,
+				Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+					return ipStack.DialContext(ctx, network, dnsServer)
+				},
+			},
+		}
+	}
 	server := socks5.Server{
+		Resolver: &resolver,
 		Dialer: func(ctx context.Context, network, addr string) (net.Conn, error) {
 
 			log.Printf("socks dial: %s", addr)
@@ -70,7 +81,7 @@ func ServeSocks5(ipStack *stack.Stack, selfIp []byte, bindAddr string) error {
 				Addr: tcpip.AddrFromSlice(selfIp),
 			}
 
-			return gonet.DialTCPWithBind(context.Background(), ipStack, bind, addrTarget, header.IPv4ProtocolNumber)
+			return gonet.DialTCPWithBind(context.Background(), ipStack.Stack(), bind, addrTarget, header.IPv4ProtocolNumber)
 		},
 	}
 
