@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
+	"net"
+	"net/netip"
+
 	"github.com/darkit/wireguard/conn"
 	"github.com/darkit/wireguard/device"
 	"github.com/darkit/wireguard/tun/netstack"
@@ -10,9 +14,6 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
-	"log"
-	"net"
-	"net/netip"
 )
 
 const defaultNIC tcpip.NICID = 1
@@ -58,7 +59,6 @@ func ServeSocks5(ipStack *netstack.Net, selfIp []byte, bindAddr, dnsServer strin
 	server := socks5.Server{
 		Resolver: &resolver,
 		Dialer: func(ctx context.Context, network, addr string) (net.Conn, error) {
-
 			log.Printf("socks dial: %s", addr)
 
 			if network != "tcp" {
