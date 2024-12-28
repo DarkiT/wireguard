@@ -63,10 +63,42 @@ func procyield(cycles uint32)
 //go:linkname nanotime runtime.nanotime
 func nanotime() int64
 
-// CreateTUN creates a Wintun interface with the given name. Should a Wintun
-// interface with the same name exist, it is reused.
-func CreateTUN(ifname string, mtu int) (Device, error) {
-	return CreateTUNWithRequestedGUID(ifname, WintunStaticRequestedGUID, mtu)
+// CreateTUN creates or reuses a Wintun virtual network interface
+//
+// Parameters:
+//   - ifname: Interface name
+//   - mtu: Maximum Transmission Unit size
+//   - guidStr: Optional GUID string to identify the interface
+//
+// If an interface with the specified name already exists, it will be reused
+// instead of creating a new one
+func CreateTUN(ifname string, mtu int, guidStr ...string) (Device, error) {
+	guid := WintunStaticRequestedGUID
+	if len(guidStr) > 0 {
+		requestedGUID, err := windows.GUIDFromString(guidStr[0])
+		if err == nil {
+			guid = &requestedGUID
+		}
+	}
+	return CreateTUNWithRequestedGUID(ifname, guid, mtu)
+}
+
+// CreateTUNWithStringGUID creates or reuses a Wintun virtual network interface
+// with a specified GUID string
+//
+// Parameters:
+//   - ifname: Interface name
+//   - guidStr: GUID string to uniquely identify the interface
+//   - mtu: Maximum Transmission Unit size
+//
+// If an interface with the specified name already exists, it will be reused
+// instead of creating a new one
+func CreateTUNWithStringGUID(ifname, guidStr string, mtu int) (Device, error) {
+	guid, err := windows.GUIDFromString(guidStr)
+	if err != nil {
+		return nil, err
+	}
+	return CreateTUNWithRequestedGUID(ifname, &guid, mtu)
 }
 
 // CreateTUNWithRequestedGUID creates a Wintun interface with the given name and
